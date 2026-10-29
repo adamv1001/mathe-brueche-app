@@ -68,8 +68,8 @@ input.num{width:110px;height:46px;font-size:20px;text-align:center;border:2px so
 .mark{font-weight:800;font-size:20px}
 .item.ok .mark{color:var(--ok)}.item.wrong .mark,.item.empty .mark{color:var(--bad)}.item.half .mark{color:var(--half)}
 .sol{display:none}.showsol .sol,.item:not(.ok) .sol{display:block}
-#res{display:none;border:3px solid var(--blue);border-radius:12px;padding:12px;background:#fff;margin:12px 0}
-#res .big{font-size:26px;font-weight:800}
+#res,#res2{display:none;border:3px solid var(--blue);border-radius:12px;padding:12px;background:#fff;margin:12px 0}
+#res .big,#res2 .big{font-size:26px;font-weight:800}
 table.key{border-collapse:collapse;font-size:15px;margin-top:6px}table.key td,table.key th{border:1px solid #bbb;padding:3px 8px;text-align:center}
 .btns{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
 .hint{font-size:13px;color:#555}
@@ -110,7 +110,7 @@ input.num{width:150px;height:66px;font-size:30px;border-width:3px;border-radius:
 .pic div{width:52px;height:52px}
 .fb{font-size:22px;padding:12px 16px}
 .mark{font-size:34px}
-#res .big{font-size:36px}#res{font-size:24px;padding:18px}
+#res .big,#res2 .big{font-size:36px}#res{font-size:24px;padding:18px}
 table.key{font-size:21px}table.key td,table.key th{padding:6px 12px}
 .btns{gap:14px}
 img,table{max-width:100%}
@@ -155,7 +155,7 @@ input,select,textarea{font-size:max(16px,1em)}
  .pic div{width:30px;height:30px}
  .fb{font-size:16px;padding:10px}
  .mark{font-size:26px}
- #res{font-size:17px;padding:12px}#res .big{font-size:24px}
+ #res{font-size:17px;padding:12px}#res .big,#res2 .big{font-size:24px}
  table.key{font-size:14px;width:100%}table.key td,table.key th{padding:4px 3px}
  .btns{gap:8px}.btns button{flex:1 1 140px}
 }
@@ -191,14 +191,17 @@ window.addEventListener('error',function(ev){try{
 <div class="head"><div class="nm"><label>Name</label><input id="nm" autocomplete="off" enterkeyhint="go" autocapitalize="words"></div><div><label>Datum</label><input id="dt"></div><div><label>Klasse</label><input id="kl" value="6"></div></div>
 <div class="noprint" style="margin:0 0 16px"><button class="main" id="los" type="button" style="width:100%;min-height:72px;font-size:30px">Los geht's ▶</button><div class="hint" style="margin-top:6px">Der Name ist freiwillig – du kannst auch gleich mit den Aufgaben anfangen.</div></div>
 <div class="info"><b>So gibst du Brüche ein:</b> oben Zähler, unten Nenner. Das kleine Feld links ist für die Ganzen einer gemischten Zahl (sonst leer lassen). Mit <b>±</b> machst du das Ergebnis negativ. Komma oder Punkt sind beide erlaubt.</div>
-<div id="res"></div>
+<div id="upd" class="noprint" style="display:none;background:#e8f0ff;border:2px solid #1f3b8f;border-radius:10px;padding:10px 14px;margin:10px 0;font-size:.8em">Eine neue Version der App ist da. Sie wird beim nächsten Öffnen benutzt – deine Antworten bleiben gespeichert.</div>
+<div id="restore" class="noprint" style="display:none;background:#fff8d6;border:3px solid #e0b000;border-radius:12px;padding:14px;margin:12px 0"><b>Deine Antworten von vorhin sind wieder da.</b> Du kannst einfach weitermachen.<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px"><button class="main" type="button" id="rsw">Weitermachen</button><button type="button" id="rsn">Neue Schulaufgabe</button></div></div>
+<div id="res" class="resbox"></div>
 <div id="tasks"></div>
+<div id="res2" class="resbox" style="display:none"></div>
 <div class="btns"><button class="main" id="sub2">Abgeben</button><button id="solb" style="display:none">Lösungen anzeigen</button><button class="main" id="newb2" style="display:none">Neue Schulaufgabe</button><button id="rst">Neu starten</button><button onclick="window.print()">Drucken</button></div>
 <div class="info" id="keyinfo"></div>
 </div></div>
 <script>var Grader=(function(){
 function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){var t=a%b;a=b;b=t;}return a;}
-function clean(s){return (s==null?'':String(s)).trim().replace(/\s+/g,'').replace(/[−–]/g,'-');}
+function clean(s){s=(s==null?'':String(s));s=s.replace(/[\uFF10-\uFF19]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);}).replace(/[\uFF0C\u201A]/g,',').replace(/\uFF0E/g,'.');return s.trim().replace(/[\s\u00A0\u2007\u202F\u200B\u2060\uFEFF]+/g,'').replace(/[\u2212\u2013\u2014\u2010\u2011\u2012\uFE63\uFF0D]/g,'-').replace(/^\+/,'');}
 function parseInt2(s){s=clean(s);if(s==='')return null;if(!/^[-+]?\d+$/.test(s))return NaN;return parseInt(s,10);}
 function parseNum(s){s=clean(s).replace(',','.');if(s==='')return null;if(!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(s))return NaN;return parseFloat(s);}
 // inp: {neg:bool,g,z,n} strings
@@ -450,46 +453,99 @@ function readInput(it){var w=document.querySelector('#I'+it.id+' > :nth-child(2)
  if(it.type==='choice'){var s=w.querySelector('.sel');return s?s.dataset.v:null;}
  if(it.type==='order')return [].map.call(w.querySelectorAll('select'),function(s){return s.value});
  if(it.type==='shade')return w.querySelectorAll('.on').length;}
-function submit(){
- if(submitted)return;
+var LSK='mathe-brueche-state-v1',RESTORING=false,RESTORED=false;
+function lsGet(){try{var s=window.localStorage.getItem(LSK);return s?JSON.parse(s):null;}catch(e){return null;}}
+function lsSet(o){try{window.localStorage.setItem(LSK,JSON.stringify(o));}catch(e){}}
+function wrapOf(it){return document.querySelector('#I'+it.id+' > :nth-child(2)');}
+function nmVal(){var n=document.getElementById('nm');return n?n.value:'';}
+function collect(){var a={};DATA.tasks.forEach(function(t){t.items.forEach(function(it){try{
+ if(it.type==='shade')a[it.id]=[].map.call(wrapOf(it).querySelectorAll('.grid div'),function(c){return c.classList.contains('on')?1:0;});
+ else a[it.id]=readInput(it);}catch(e){}});});return a;}
+function save(){if(RESTORING)return;try{lsSet({v:1,seed:SEED,name:nmVal(),answers:collect(),submitted:submitted,timer:{remain:curRemain(),endAt:endAt},saved:Date.now()});}catch(e){}}
+function saveSoon(){setTimeout(save,0);}
+function applyAnswers(a){if(!a)return;DATA.tasks.forEach(function(t){t.items.forEach(function(it){var v=a[it.id];if(v==null)return;try{var w=wrapOf(it);
+ if(it.type==='frac'){w.querySelectorAll('input').forEach(function(i){var x=v[i.dataset.k];i.value=x==null?'':String(x);});var sb=w.querySelector('.sg');if(v.neg){sb.classList.add('neg');sb.textContent='−';}}
+ else if(it.type==='num')w.querySelector('input').value=String(v);
+ else if(it.type==='choice'){[].forEach.call(w.children,function(b){if(String(b.dataset.v)===String(v))b.classList.add('sel');});}
+ else if(it.type==='order'){var s=w.querySelectorAll('select');for(var i=0;i<s.length;i++)s[i].value=v[i]==null?'':String(v[i]);}
+ else if(it.type==='shade'){var c=w.querySelectorAll('.grid div');for(var j=0;j<c.length;j++)if(v[j])c[j].classList.add('on');}
+ }catch(e){}});});}
+function hasAnswers(a){if(!a)return false;for(var k in a){var v=a[k];if(v==null)continue;
+ if(typeof v==='string'&&v.trim()!=='')return true;if(typeof v==='object'){if(Array.isArray(v)){if(v.some(function(x){return x===1||(typeof x==='string'&&x!=='');}))return true;}else if(v.neg||v.g||v.z||v.n)return true;}}return false;}
+// ---- in-page dialog (no confirm/alert) ----
+function dlg(text,yes,no,onYes){var d=document.getElementById('dlg');if(!d){onYes();return;}
+ d.querySelector('.dt').textContent=text;var y=d.querySelector('.dy'),n=d.querySelector('.dn');y.textContent=yes;n.textContent=no;
+ y.onclick=function(){d.style.display='none';onYes();};n.onclick=function(){d.style.display='none';};d.style.display='flex';try{y.focus();}catch(e){}}
+function countEmpty(){var e=0;DATA.tasks.forEach(function(t){t.items.forEach(function(it){try{if(Grader.grade(it,readInput(it)).status==='empty')e++;}catch(x){}});});return e;}
+function requestSubmit(){if(submitted){showResult(true);return;}
+ if(window.SKIPCONFIRM){doSubmit('');return;}
+ var e=0;try{e=countEmpty();}catch(x){}
+ dlg(e?'Wirklich abgeben? '+e+' Antwort'+(e===1?' ist':'en sind')+' noch leer.':'Wirklich abgeben?','Ja, abgeben','Weiter rechnen',function(){doSubmit('');});}
+function resultHTML(tot,n,note){return '<div class="big">'+fmtP(tot)+' von '+fmtP(TOTAL)+' Punkten · Note '+n+'</div>'+(note?'<div><b>'+note+'</b></div>':'')+'<div>'+(nmVal()?nmVal().replace(/[<>&]/g,'')+': ':'')+Math.round(tot/TOTAL*100)+' % · '+['','Sehr gut! 🎉','Gut! 👍','Befriedigend','Ausreichend – nochmal üben!','Mangelhaft – bitte die Rechenwege anschauen.','Ungenügend – bitte die Rechenwege anschauen.'][n]+'</div><div class="hint">Bei jeder Aufgabe stehen jetzt Lösung und Rechenweg für die Fehler.</div><div style="margin-top:10px" class="noprint"><button class="main" type="button" onclick="newTest()">Neue Schulaufgabe (neue Zahlen)</button></div>';}
+function showResult(scroll){var R=document.getElementById('res');R.style.display='block';var R2=document.getElementById('res2');if(R2)R2.style.display='block';
+ if(scroll){try{var y=R.getBoundingClientRect().top+window.pageYOffset-(document.querySelector('.bar').offsetHeight||0)-10;window.scrollTo(0,Math.max(0,y));}catch(e){try{R.scrollIntoView();}catch(x){}}}}
+function doSubmit(note){if(submitted){showResult(true);return;}
  var tot=0,res={};
  DATA.tasks.forEach(function(t){var tp=0;t.items.forEach(function(it){
-  var r=Grader.grade(it,readInput(it));res[it.id]=r;tp+=r.score;
-  var row=document.getElementById('I'+it.id);row.classList.add(r.status);
-  row.querySelector('.mark').textContent=r.status==='ok'?'✔':r.status==='half'?'½':'✘';
-  var fb='';
-  if(r.status==='ok')fb='Richtig! +'+fmtP(r.score)+' P';
-  else if(r.status==='half')fb='Teilweise richtig: +'+fmtP(r.score)+' P. '+r.hint;
-  else fb=(r.status==='empty'?'Keine Antwort.':'Leider falsch.')+(r.hint?' '+r.hint:'')+' 0 P';
-  fb+='<div class="sol"><b>Lösung:</b> '+fmt(it.sol)+'<br><b>Rechenweg:</b> '+fmt(it.rw)+'</div>';
-  row.querySelector('.fb').innerHTML=fb;});
-  document.querySelector('#T'+t.id+' .got').textContent=fmtP(tp)+' ';tot+=tp;});
- submitted=true;document.body.classList.add('done');
- document.querySelectorAll('#tasks input,#tasks select').forEach(function(i){i.disabled=true});
- var n=Grader.note(tot,TOTAL),R=document.getElementById('res');R.style.display='block';
- R.innerHTML='<div class="big">'+fmtP(tot)+' von '+fmtP(TOTAL)+' Punkten · Note '+n+'</div><div>'+Math.round(tot/TOTAL*100)+' % · '+['','Sehr gut! 🎉','Gut! 👍','Befriedigend','Ausreichend – nochmal üben!','Mangelhaft – bitte die Rechenwege anschauen.','Ungenügend – bitte die Rechenwege anschauen.'][n]+'</div><div class="hint">Unten bei jeder Aufgabe stehen Lösung und Rechenweg für die Fehler.</div><div style="margin-top:10px" class="noprint"><button class="main" type="button" onclick="newTest()">Neue Schulaufgabe (neue Zahlen)</button></div>';
+  var r;try{r=Grader.grade(it,readInput(it));if(!r||typeof r.score!=='number'||isNaN(r.score))throw new Error('bad');}catch(e){r={score:0,status:'wrong',hint:'Die Antwort konnte nicht gelesen werden.'};}
+  res[it.id]=r;tp+=r.score;
+  try{var row=document.getElementById('I'+it.id);row.classList.add(r.status);
+   row.querySelector('.mark').textContent=r.status==='ok'?'✔':r.status==='half'?'½':'✘';
+   var fb='';if(r.status==='ok')fb='Richtig! +'+fmtP(r.score)+' P';else if(r.status==='half')fb='Teilweise richtig: +'+fmtP(r.score)+' P. '+r.hint;
+   else fb=(r.status==='empty'?'Keine Antwort.':'Leider falsch.')+(r.hint?' '+r.hint:'')+' 0 P';
+   fb+='<div class="sol"><b>Lösung:</b> '+fmt(it.sol)+'<br><b>Rechenweg:</b> '+fmt(it.rw)+'</div>';row.querySelector('.fb').innerHTML=fb;}catch(e){}});
+  try{document.querySelector('#T'+t.id+' .got').textContent=fmtP(tp)+' ';}catch(e){}tot+=tp;});
+ submitted=true;var n=6;try{n=Grader.note(tot,TOTAL);}catch(e){}
+ var html='';try{html=resultHTML(tot,n,note);}catch(e){html='<div class="big">'+tot+' von 50 Punkten · Note '+n+'</div>';}
+ try{document.getElementById('res').innerHTML=html;}catch(e){}try{document.getElementById('res2').innerHTML=html;}catch(e){}
  window.RESULT={points:tot,total:TOTAL,note:n,items:res};
- document.getElementById('solb').style.display='';document.getElementById('newb2').style.display='';stopT();R.scrollIntoView({behavior:'smooth'});}
-document.getElementById('sub1').onclick=document.getElementById('sub2').onclick=function(){if(submitted||window.SKIPCONFIRM||confirm('Wirklich abgeben?'))submit();};
+ try{document.body.classList.add('done');document.querySelectorAll('#tasks input,#tasks select').forEach(function(i){i.disabled=true});}catch(e){}
+ try{document.getElementById('solb').style.display='';document.getElementById('newb2').style.display='';}catch(e){}
+ try{stopT();}catch(e){}
+ showResult(true);save();}
+function submit(){doSubmit('');}
+document.getElementById('sub1').onclick=requestSubmit;document.getElementById('sub2').onclick=requestSubmit;
 document.getElementById('solb').onclick=function(){document.body.classList.toggle('showsol');this.textContent=document.body.classList.contains('showsol')?'Lösungen ausblenden':'Lösungen anzeigen';};
-document.getElementById('rst').onclick=function(){if(window.SKIPCONFIRM||confirm('Alle Antworten löschen und dieselbe Variante neu starten?'))resetUI();};
-function resetUI(){submitted=false;TOUCHED=false;document.body.classList.remove('done');document.body.classList.remove('showsol');var R=document.getElementById('res');R.style.display='none';R.innerHTML='';
+document.getElementById('rst').onclick=function(){if(window.SKIPCONFIRM){resetUI();return;}dlg('Alle Antworten löschen und dieselbe Variante neu starten?','Ja, löschen','Abbrechen',resetUI);};
+function resetUI(){submitted=false;TOUCHED=false;document.body.classList.remove('done');document.body.classList.remove('showsol');
+ ['res','res2'].forEach(function(id){var R=document.getElementById(id);if(R){R.style.display='none';R.innerHTML='';}});
+ var rn=document.getElementById('restore');if(rn)rn.style.display='none';
  var sb=document.getElementById('solb');sb.style.display='none';sb.textContent='Lösungen anzeigen';document.getElementById('newb2').style.display='none';
- stopT();T=45*60;draw();window.RESULT=null;build();document.getElementById('var').textContent=SEED;window.scrollTo(0,0);}
+ stopT();remain=TLEN;endAt=0;timeUpDone=false;draw();window.RESULT=null;build();document.getElementById('var').textContent=SEED;window.scrollTo(0,0);save();}
 function newTest(seed){SEED=seed||Gen.newSeed();DATA=Gen.make(SEED);resetUI();}
 document.getElementById('newb2').onclick=function(){newTest();};
-document.getElementById('tasks').addEventListener('input',function(){TOUCHED=true;});
-document.getElementById('tasks').addEventListener('click',function(e){if(e.target&&(e.target.tagName==='BUTTON'||e.target.parentNode&&e.target.parentNode.classList&&e.target.parentNode.classList.contains('tap')))TOUCHED=true;});
-document.getElementById('tasks').addEventListener('change',function(){TOUCHED=true;});
-var T=45*60,ti=null;function draw(){var m=Math.floor(Math.abs(T)/60),s=Math.abs(T)%60;document.getElementById('tm').textContent=(T<0?'+':'')+m+':'+(s<10?'0':'')+s;}
-function stopT(){if(ti){clearInterval(ti);ti=null;}document.getElementById('tbtn').textContent='Start';}
-document.getElementById('tbtn').onclick=function(){if(ti){stopT();return;}this.textContent='Pause';ti=setInterval(function(){T--;draw();if(T===0)alert('Die 45 Minuten sind um (du darfst trotzdem fertig machen).');},1000);};
-function startT(){if(!ti)document.getElementById('tbtn').click();}
-function los(){if(!submitted&&!TOUCHED&&!URLSEED){SEED=Gen.newSeed();DATA=Gen.make(SEED);build();document.getElementById('var').textContent=SEED;}var n=document.getElementById('nm');if(n)n.blur();var a=document.getElementById('TA1');if(a){var y=a.getBoundingClientRect().top+window.pageYOffset-document.querySelector('.bar').offsetHeight-10;window.scrollTo(0,y);}if(!submitted)startT();}
+document.getElementById('tasks').addEventListener('input',function(){TOUCHED=true;saveSoon();});
+document.getElementById('tasks').addEventListener('change',function(){TOUCHED=true;saveSoon();});
+document.getElementById('tasks').addEventListener('click',function(e){if(e.target&&(e.target.tagName==='BUTTON'||e.target.parentNode&&e.target.parentNode.classList&&e.target.parentNode.classList.contains('tap')))TOUCHED=true;saveSoon();});
+// ---- timer with timestamps ----
+var TLEN=45*60,remain=TLEN,endAt=0,ti=null,timeUpDone=false;
+function curRemain(){return endAt?Math.ceil((endAt-Date.now())/1000):remain;}
+function draw(){var T=curRemain();if(T<0)T=0;var m=Math.floor(T/60),s=T%60;var el2=document.getElementById('tm');if(el2)el2.textContent=m+':'+(s<10?'0':'')+s;
+ if(endAt&&T<=0&&!submitted&&!timeUpDone){timeUpDone=true;remain=0;endAt=0;if(ti){clearInterval(ti);ti=null;}doSubmit('Die 45 Minuten sind um – die Schulaufgabe wurde automatisch abgegeben.');}}
+function stopT(){if(endAt){remain=Math.max(0,curRemain());endAt=0;}if(ti){clearInterval(ti);ti=null;}var b=document.getElementById('tbtn');if(b)b.textContent='Start';}
+function startT(){if(submitted||endAt)return;if(remain<=0)return;endAt=Date.now()+remain*1000;if(ti)clearInterval(ti);ti=setInterval(draw,1000);document.getElementById('tbtn').textContent='Pause';draw();save();}
+document.getElementById('tbtn').onclick=function(){if(endAt)stopT();else startT();save();};
+document.addEventListener('visibilitychange',function(){draw();if(document.visibilityState==='hidden')save();});
+window.addEventListener('pagehide',save);window.addEventListener('focus',draw);
+function los(){if(!submitted&&!TOUCHED&&!URLSEED&&!RESTORED){SEED=Gen.newSeed();DATA=Gen.make(SEED);build();document.getElementById('var').textContent=SEED;}
+ var rn=document.getElementById('restore');if(rn)rn.style.display='none';
+ var n=document.getElementById('nm');if(n)n.blur();var a=document.getElementById('TA1');if(a){var y=a.getBoundingClientRect().top+window.pageYOffset-document.querySelector('.bar').offsetHeight-10;window.scrollTo(0,y);}if(!submitted)startT();save();}
+function restore(){var st=lsGet();if(!st||!st.seed)return;if(URLSEED&&URLSEED!==st.seed)return;if(!st.submitted&&!hasAnswers(st.answers))return;
+ RESTORING=true;try{SEED=st.seed;DATA=Gen.make(SEED);build();document.getElementById('var').textContent=SEED;applyAnswers(st.answers);
+  if(st.name)document.getElementById('nm').value=st.name;TOUCHED=true;RESTORED=true;
+  var tm=st.timer||{};if(tm.endAt){endAt=tm.endAt;ti=setInterval(draw,1000);document.getElementById('tbtn').textContent='Pause';}else if(typeof tm.remain==='number')remain=Math.max(0,tm.remain);
+ }finally{RESTORING=false;}
+ draw();
+ if(st.submitted){doSubmit('');return;}
+ var rn=document.getElementById('restore');if(rn){rn.style.display='block';}}
 function safe(name,f){try{f();}catch(e){showErr(e&&e.message?e.message:String(e),name,0,0,e&&e.stack);}}
 safe('Datum',function(){document.getElementById('dt').value=new Date().toLocaleDateString('de-DE');});
 safe('Aufgaben',function(){build();document.getElementById('var').textContent=SEED;});
+safe('Wiederherstellen',restore);
 safe('Los',function(){document.getElementById('los').onclick=los;});
-safe('Name',function(){document.getElementById('nm').addEventListener('keydown',function(e){if(e.key==='Enter'||e.keyCode===13){e.preventDefault();los();}});});
-</script><script>try{if("serviceWorker" in navigator&&location.protocol!=="file:"){window.addEventListener("load",function(){var hadC=!!navigator.serviceWorker.controller,rl=false;navigator.serviceWorker.addEventListener("controllerchange",function(){if(hadC&&!rl&&!document.body.classList.contains("done")){rl=true;location.reload();}});navigator.serviceWorker.register("sw.js").then(function(){window.SWOK=1;}).catch(function(e){window.SWERR=String(e);});});}}catch(e){}</script>
+safe('Name',function(){var n=document.getElementById('nm');n.addEventListener('keydown',function(e){if(e.key==='Enter'||e.keyCode===13){e.preventDefault();los();}});n.addEventListener('input',saveSoon);});
+safe('Weiter',function(){document.getElementById('rsw').onclick=function(){document.getElementById('restore').style.display='none';los();};document.getElementById('rsn').onclick=function(){newTest();};});
+draw();
+</script><script>try{if("serviceWorker" in navigator&&location.protocol!=="file:"){window.addEventListener("load",function(){var hadC=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener("controllerchange",function(){if(hadC){var u=document.getElementById("upd");if(u)u.style.display="block";}});navigator.serviceWorker.register("sw.js").then(function(r){window.SWOK=1;r.addEventListener("updatefound",function(){if(navigator.serviceWorker.controller){var u=document.getElementById("upd");if(u)u.style.display="block";}});}).catch(function(e){window.SWERR=String(e);});});}}catch(e){}</script>
+<div id="dlg" role="dialog" aria-modal="true" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);align-items:center;justify-content:center;padding:20px"><div style="background:#fff;border-radius:16px;padding:22px;max-width:520px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.3)"><div class="dt" style="font-size:1.05em;margin-bottom:16px;font-weight:700"></div><div style="display:flex;flex-wrap:wrap;gap:12px"><button class="main dy" type="button" style="flex:1 1 160px"></button><button class="dn" type="button" style="flex:1 1 160px"></button></div></div></div>
 </body></html>
