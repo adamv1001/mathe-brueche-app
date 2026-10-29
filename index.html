@@ -176,13 +176,13 @@ window.onerror=function(m,s,l,c){var e=document.getElementById('err');if(e){e.st
 <div class="bar"><b>Mathe · Brüche · Kl. 6</b><span>⏱ <span class="tm" id="tm">45:00</span> <button id="tbtn" style="min-height:34px;padding:2px 10px;background:transparent;color:#fff;border-color:#fff">Start</button></span><button class="main" id="sub1">Abgeben</button></div>
 <div class="wrap"><div class="paper">
 <h1 id="ttl"></h1>
-<div class="sub">Gnadenthal-Realschule Ingolstadt · Klasse 6 · Arbeitszeit: 45 Minuten · Hilfsmittel: keine</div>
+<div class="sub">Gnadenthal-Realschule Ingolstadt · Klasse 6 · Arbeitszeit: 45 Minuten · Hilfsmittel: keine · <b>Variante Nr. <span id="var"></span></b></div>
 <div class="head"><div class="nm"><label>Name</label><input id="nm" autocomplete="off" enterkeyhint="go" autocapitalize="words"></div><div><label>Datum</label><input id="dt"></div><div><label>Klasse</label><input id="kl" value="6"></div></div>
 <div class="noprint" style="margin:0 0 16px"><button class="main" id="los" type="button" style="width:100%;min-height:72px;font-size:30px">Los geht's ▶</button><div class="hint" style="margin-top:6px">Der Name ist freiwillig – du kannst auch gleich mit den Aufgaben anfangen.</div></div>
 <div class="info"><b>So gibst du Brüche ein:</b> oben Zähler, unten Nenner. Das kleine Feld links ist für die Ganzen einer gemischten Zahl (sonst leer lassen). Mit <b>±</b> machst du das Ergebnis negativ. Komma oder Punkt sind beide erlaubt.</div>
 <div id="res"></div>
 <div id="tasks"></div>
-<div class="btns"><button class="main" id="sub2">Abgeben</button><button id="solb" style="display:none">Lösungen anzeigen</button><button id="rst">Neu starten</button><button onclick="window.print()">Drucken</button></div>
+<div class="btns"><button class="main" id="sub2">Abgeben</button><button id="solb" style="display:none">Lösungen anzeigen</button><button class="main" id="newb2" style="display:none">Neue Schulaufgabe</button><button id="rst">Neu starten</button><button onclick="window.print()">Drucken</button></div>
 <div class="info" id="keyinfo"></div>
 </div></div>
 <script>var Grader=(function(){
@@ -250,8 +250,153 @@ return {parseFrac:parseFrac,parseNum:parseNum,grade:grade,note:note,KEY:KEY,gcd:
 })();
 if(typeof module!=='undefined')module.exports=Grader;
 </script>
+<script>var Gen=(function(){
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){var t=a%b;a=b;b=t;}return a;}
+function lcm(a,b){return a/gcd(a,b)*b;}
+function lcmA(a){return a.reduce(lcm,1);}
+function red(n,d){var g=gcd(n,d)||1;if(d<0){n=-n;d=-d;}return [n/g,d/g];}
+function add(x,y){return red(x[0]*y[1]+y[0]*x[1],x[1]*y[1]);}
+function sub(x,y){return red(x[0]*y[1]-y[0]*x[1],x[1]*y[1]);}
+function cmpF(x,y){var a=x[0]*y[1],b=y[0]*x[1];return a<b?-1:a>b?1:0;}
+var M='\u2212';
+function t(n,d){return '{'+n+'/'+d+'}';}
+function sol(f){var n=f[0],d=f[1];if(n===0)return '0';var s=n<0?M:'',a=Math.abs(n);
+ if(d===1)return s+a;if(a>d)return s+'{'+Math.floor(a/d)+' '+(a%d)+'/'+d+'}';return s+t(a,d);}
+function rng(seed){var a=seed>>>0;return function(){a=(a+0x6D2B79F5)>>>0;var x=a;x=Math.imul(x^(x>>>15),x|1);x^=x+Math.imul(x^(x>>>7),x|61);return((x^(x>>>14))>>>0)/4294967296;};}
+function make(seed){
+ var R=rng(seed);
+ function ri(a,b){return a+Math.floor(R()*(b-a+1));}
+ function pick(a){return a[Math.floor(R()*a.length)];}
+ function shuf(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(R()*(i+1));var x=a[i];a[i]=a[j];a[j]=x;}return a;}
+ function prop(n){var c=[];for(var z=1;z<n;z++)if(gcd(z,n)===1)c.push(z);return pick(c);}
+ function propMin2(n){var c=[];for(var z=2;z<n;z++)if(gcd(z,n)===1)c.push(z);return c.length?pick(c):1;}
+ var T=[];
+ // A1
+ var n1=pick([5,6,7,8,9,10]),k1=prop(n1);
+ var lay=pick([[2,4],[2,5],[2,6],[3,3],[3,4],[3,5],[3,6]]),cells=lay[0]*lay[1],dv=[];for(var d=2;d<cells;d++)if(cells%d===0)dv.push(d);
+ var nb=pick(dv),zb=prop(nb),q=cells/nb,need=q*zb;
+ var bc=ri(3,12),ac=prop(bc);while(ac===bc)ac=prop(bc);
+ var askN=R()<0.5;
+ T.push({id:'A1',title:'Bruchteile',intro:'',items:[
+  {id:'1a',type:'frac',form:'any',pts:1,label:'Welcher Bruchteil des Rechtecks ist gefärbt?',pic:{rows:1,cols:n1,shaded:k1},ans:[k1,n1],sol:t(k1,n1),rw:'Das Ganze ist in '+n1+' gleiche Teile geteilt → Nenner '+n1+'. '+k1+' Teile sind gefärbt → Zähler '+k1+'. Also '+t(k1,n1)+'.'},
+  {id:'1b',type:'shade',pts:1,label:'Tippe Kästchen an und färbe '+t(zb,nb)+' des Rechtecks.',rows:lay[0],cols:lay[1],need:need,sol:need+' von '+cells+' Kästchen',rw:cells+' Kästchen : '+nb+' = '+q+' Kästchen ('+t(1,nb)+'). '+q+' · '+zb+' = '+need+' Kästchen ('+t(zb,nb)+').'},
+  {id:'1c',type:'choice',pts:0.5,label:'Bei '+t(ac,bc)+': Wie heißt die '+ac+' (oben)?',options:['Zähler','Nenner','Bruchstrich'],ans:0,sol:'Zähler',rw:'Oben steht der Zähler.'},
+  {id:'1d',type:'choice',pts:0.5,label:'Bei '+t(ac,bc)+': Wie heißt die '+bc+' (unten)?',options:['Zähler','Nenner','Bruchstrich'],ans:1,sol:'Nenner',rw:'Unten steht der Nenner.'},
+  {id:'1e',type:'choice',pts:1,label:'Der <b>'+(askN?'Nenner':'Zähler')+'</b> des Bruches gibt an, …',options:['wie viele Teile genommen wurden.','in wie viele gleiche Teile das Ganze geteilt wurde.','wie groß das Ganze ist.'],ans:askN?1:0,sol:askN?'… in wie viele gleiche Teile das Ganze geteilt wurde.':'… wie viele Teile genommen wurden.',rw:'Der Nenner gibt an, in wie viele gleiche Teile das Ganze geteilt wurde. Der Zähler gibt an, wie viele Teile genommen wurden.'}]});
+ // A2
+ function gr(id,big,small,f,list){var n=pick(list),z=prop(n);while(z>12)z=prop(n);var qq=f/n,a=qq*z;
+  return {id:id,type:'num',pts:1,label:t(z,n)+' '+big+' =',unit:small,ans:a,sol:a+' '+small,rw:'1 '+big+' = '+f+' '+small+'. ('+f+' '+small+' : '+n+') · '+z+' = '+qq+' '+small+' · '+z+' = '+a+' '+small};}
+ var vu=pick(['min','km','€','kg','m']),n2=ri(3,9),z2=propMin2(n2),k2=ri(3,12),X=n2*k2;
+ T.push({id:'A2',title:'Bruchteile von Größen – schreibe ohne Bruch',intro:'',items:[
+  gr('2a','m','cm',100,[2,4,5,10,20,25,50]),gr('2b','kg','g',1000,[4,5,8,10,20,25,40,50]),gr('2c','t','kg',1000,[2,4,5,8,10,20,25,50]),gr('2d','h','min',60,[3,4,5,6,10,12,15,20,30]),
+  {id:'2e',type:'num',pts:1,label:t(z2,n2)+' von '+X+' '+vu+' =',unit:vu,ans:z2*k2,sol:(z2*k2)+' '+vu,rw:X+' '+vu+' : '+n2+' = '+k2+' '+vu+'. '+k2+' '+vu+' · '+z2+' = '+(z2*k2)+' '+vu}]});
+ // A3
+ function ga(id,u){var n=ri(3,10),z=propMin2(n),k=ri(4,25),V=z*k,Tt=n*k;
+  return {id:id,type:'num',pts:2,label:t(z,n)+' von ? sind '+V+' '+u+'. Das Ganze:',unit:u,ans:Tt,sol:Tt+' '+u,rw:V+' '+u+' : '+z+' = '+k+' '+u+' → '+t(1,n)+'. '+k+' '+u+' · '+n+' = '+Tt+' '+u+' → das Ganze.'};}
+ var u3=pick(['km','kg','m']),u3b=pick(['€','l']);
+ T.push({id:'A3',title:'Vom Bruchteil zum Ganzen',intro:'',items:[ga('3a',u3),ga('3b',u3b)]});
+ // A4
+ var ctx=pick([['Ein Leuchtturm','Leuchtturm','Meeresboden','am Leuchtturm',24,120],['Ein Brückenpfeiler','Brückenpfeiler','Flussboden','am Brückenpfeiler',24,96],['Ein Holzpfahl in einem See','Holzpfahl','Seeboden','am Pfahl',12,48]]);
+ var combo=pick([[[1,2],[1,4]],[[1,2],[1,6]],[[1,3],[1,6]],[[2,5],[1,5]],[[1,2],[1,8]],[[3,5],[1,10]],[[1,3],[1,4]],[[1,4],[1,3]],[[2,3],[1,6]],[[1,2],[1,3]],[[1,2],[1,5]],[[3,8],[1,4]]]);
+ var fa=combo[0],fb=combo[1],rest=sub(sub([1,1],fa),fb),L4=lcmA([fa[1],fb[1],rest[1]]),Hs=[];
+ for(var h=L4;h<=ctx[5];h+=L4)if(h>=ctx[4])Hs.push(h);if(!Hs.length)Hs.push(L4*Math.ceil(ctx[4]/L4));
+ var H=pick(Hs),ha=H*fa[0]/fa[1],hb=H*fb[0]/fb[1],hc=H-ha-hb;
+ var rwr=hc+' m von '+H+' m: '+t(hc,H)+(red(hc,H)[1]!==H?' = '+t(rest[0],rest[1]):'')+' (oder: 1 '+M+' '+t(fa[0],fa[1])+' '+M+' '+t(fb[0],fb[1])+' = '+t(L4,L4)+' '+M+' '+t(fa[0]*L4/fa[1],L4)+' '+M+' '+t(fb[0]*L4/fb[1],L4)+' = '+t(rest[0]*L4/rest[1],L4)+(rest[1]!==L4?' = '+t(rest[0],rest[1]):'')+')';
+ T.push({id:'A4',title:'Textaufgabe: '+ctx[1],intro:ctx[0]+' ist insgesamt '+H+' m hoch. '+t(fa[0],fa[1])+' der Gesamthöhe ragt aus dem Wasser, '+t(fb[0],fb[1])+' steckt im '+ctx[2]+', der Rest steht im Wasser.',items:[
+  {id:'4a',type:'num',pts:1,label:'Wie hoch ragt er aus dem Wasser?',unit:'m',ans:ha,sol:ha+' m',rw:t(fa[0],fa[1])+' von '+H+' m: '+H+' m : '+fa[1]+(fa[0]>1?' = '+(H/fa[1])+' m; '+(H/fa[1])+' m · '+fa[0]:'')+' = '+ha+' m'},
+  {id:'4b',type:'num',pts:1,label:'Wie tief steckt er im '+ctx[2]+'?',unit:'m',ans:hb,sol:hb+' m',rw:t(fb[0],fb[1])+' von '+H+' m: '+H+' m : '+fb[1]+(fb[0]>1?' = '+(H/fb[1])+' m; '+(H/fb[1])+' m · '+fb[0]:'')+' = '+hb+' m'},
+  {id:'4c',type:'num',pts:1,label:'Wie tief ist das Wasser '+ctx[3]+'?',unit:'m',ans:hc,sol:hc+' m',rw:H+' m '+M+' '+ha+' m '+M+' '+hb+' m = '+hc+' m'},
+  {id:'4d',type:'frac',form:'reduced',pts:1,label:'Welcher Bruchteil der Gesamthöhe steht im Wasser? (gekürzt)',ans:rest,sol:t(rest[0],rest[1]),rw:rwr}]});
+ // A5
+ var d1,b2,zz,d3,S,ok=false,guard=0;
+ while(!ok&&guard++<500){d1=pick([2,3,4]);b2=pick([6,8,9,10,12,15,18,24]);zz=prop(b2);d3=pick([6,8,9,10,12,15,18]);
+  var Lb=lcmA([d1,b2,d3]);if(cmpF([zz,b2],[1,d1])>=0||cmpF([1,d3],[zz,b2])>=0||Lb>150)continue;
+  var cand=[];for(var s=Lb;s<=150;s+=Lb)if(s>=30)cand.push(s);if(!cand.length)continue;S=pick(cand);ok=true;}
+ var who=pick([['Ein Mauersegler','in einer Sekunde'],['Ein Wanderfalke im Sturzflug','in einer Sekunde'],['Ein Gepard','in einer Sekunde']]);
+ T.push({id:'A5',title:'Textaufgabe: Wie schnell sind sie?',intro:who[0]+' schafft '+S+' m '+who[1]+'. Berechne, wie weit die anderen in einer Sekunde kommen.',items:[
+  {id:'5a',type:'num',pts:1,label:'Brieftaube: '+t(1,d1)+' davon',unit:'m',ans:S/d1,sol:(S/d1)+' m',rw:t(1,d1)+' von '+S+' m: '+S+' m : '+d1+' = '+(S/d1)+' m'},
+  {id:'5b',type:'num',pts:1,label:'Pferd: '+t(zz,b2)+' davon',unit:'m',ans:S/b2*zz,sol:(S/b2*zz)+' m',rw:t(zz,b2)+' von '+S+' m: '+S+' m : '+b2+' = '+(S/b2)+' m; '+(S/b2)+' m · '+zz+' = '+(S/b2*zz)+' m'},
+  {id:'5c',type:'num',pts:1,label:'Mensch: '+t(1,d3)+' davon',unit:'m',ans:S/d3,sol:(S/d3)+' m',rw:t(1,d3)+' von '+S+' m: '+S+' m : '+d3+' = '+(S/d3)+' m'}]});
+ // A6
+ var seen={},six=[];
+ function addF(kind){for(var g=0;g<200;g++){var z,n;if(kind===0){n=ri(3,12);z=ri(1,n-1);}else if(kind===1){n=ri(2,9);z=ri(n+1,3*n);if(z%n===0)continue;}else{n=ri(2,9);z=n*ri(1,4);}
+  var key=z+'/'+n;if(seen[key])continue;seen[key]=1;six.push({z:z,n:n,k:kind});return;}}
+ [0,0,1,1,2,2].forEach(addF);six=shuf(six);var E6=['echt','unecht','Scheinbruch'];
+ T.push({id:'A6',title:'Bruchsorten – ordne zu',intro:'Echter Bruch: Zähler kleiner als Nenner. Unechter Bruch: Zähler größer als Nenner. Scheinbruch: Zähler ist ein Vielfaches vom Nenner.',items:six.map(function(f,i){
+  var rw=f.k===0?f.z+' < '+f.n+' → echter Bruch':f.k===1?f.z+' > '+f.n+', '+f.z+' ist kein Vielfaches von '+f.n+' → unechter Bruch':f.z+' = '+(f.z/f.n)+' · '+f.n+' → Scheinbruch ('+t(f.z,f.n)+' = '+(f.z/f.n)+')';
+  return {id:'6'+'abcdef'[i],type:'choice',pts:0.5,label:t(f.z,f.n),options:E6,ans:f.k,sol:E6[f.k],rw:rw};})});
+ // A7
+ function m2i(id){var g=ri(1,6),n=ri(3,9),z=prop(n),N=g*n+z;return {id:id,type:'frac',form:'improper',pts:1,label:'{'+g+' '+z+'/'+n+'} =',ans:[N,n],sol:t(N,n),rw:'Ganze mal Nenner + Zähler: '+g+' · '+n+' + '+z+' = '+N+'. Der Nenner bleibt: '+t(N,n)};}
+ function i2m(id){var g=ri(2,9),n=ri(3,9),z=prop(n),N=g*n+z;return {id:id,type:'frac',form:'mixed',pts:1,label:t(N,n)+' =',ans:[N,n],sol:'{'+g+' '+z+'/'+n+'}',rw:'Zähler : Nenner: '+N+' : '+n+' = '+g+' R '+z+' → '+g+' Ganze, Rest '+z+' ist der Zähler: {'+g+' '+z+'/'+n+'}'};}
+ var a7=m2i('7a'),b7=m2i('7b');while(b7.label===a7.label)b7=m2i('7b');var c7=i2m('7c'),d7=i2m('7d');while(d7.label===c7.label)d7=i2m('7d');
+ T.push({id:'A7',title:'Gemischte Zahlen und unechte Brüche',intro:'a), b): Schreibe als unechten Bruch. c), d): Schreibe als gemischte Zahl.',items:[a7,b7,c7,d7]});
+ // A8
+ function kz(id,avoid){for(;;){var qd=ri(3,12),p=prop(qd),k=ri(2,7);if(qd*k>96||qd===avoid)continue;
+  return {id:id,type:'frac',form:'reduced',pts:1,label:'Kürze vollständig: '+t(p*k,qd*k)+' =',ans:[p,qd],sol:t(p,qd),rw:(p*k)+' und '+(qd*k)+' durch '+k+' teilen: '+t(p*k,qd*k)+' = '+t(p,qd),_q:qd};}}
+ var a8=kz('8a',0),b8=kz('8b',a8._q);delete a8._q;delete b8._q;
+ var b8c=ri(3,9),a8c=prop(b8c),k8=ri(2,6),N8=b8c*k8;
+ var c8={id:'8c',type:'frac',form:'denom:'+N8,pts:1,label:'Erweitere auf den Nenner '+N8+': '+t(a8c,b8c)+' =',ans:[a8c,b8c],sol:t(a8c*k8,N8),rw:b8c+' · '+k8+' = '+N8+', also mit '+k8+' erweitern: '+a8c+' · '+k8+' = '+(a8c*k8)+' → '+t(a8c*k8,N8)};
+ function mults(m,L){var r=[];for(var v=m;v<=L;v+=m)r.push(v);return r.join(', ');}
+ var p1,p2,L8;for(;;){p1=ri(3,12);p2=ri(3,12);if(p1===p2||p1%p2===0||p2%p1===0)continue;L8=lcm(p1,p2);if(L8<=36)break;}
+ var mx=Math.max(p1,p2),mn=Math.min(p1,p2);
+ var d8={id:'8d',type:'num',pts:1,label:'Hauptnenner (kgV) von '+t(prop(p1),p1)+' und '+t(prop(p2),p2)+':',unit:'',ans:L8,sol:String(L8),rw:'Vielfache von '+mx+': '+mults(mx,L8)+' – '+L8+' ist auch Vielfaches von '+mn+' → Hauptnenner '+L8};
+ var e3,L8e;for(;;){e3=[ri(2,12),ri(2,12),ri(2,12)];if(e3[0]===e3[1]||e3[1]===e3[2]||e3[0]===e3[2])continue;L8e=lcmA(e3);var mxe=Math.max.apply(null,e3);if(L8e<=60&&L8e>mxe&&e3.every(function(x){return x===mxe||mxe%x!==0||true;}))break;}
+ var mxe2=Math.max.apply(null,e3),oth=e3.filter(function(x){return x!==mxe2;});
+ var e8={id:'8e',type:'num',pts:1,label:'Hauptnenner (kgV) von '+e3.map(function(x){return t(prop(x),x);}).join(', ').replace(/, ([^,]*)$/,' und $1')+':',unit:'',ans:L8e,sol:String(L8e),rw:'Vielfache von '+mxe2+': '+mults(mxe2,L8e)+' – '+L8e+' ist durch '+oth[0]+' und '+oth[1]+' teilbar → Hauptnenner '+L8e};
+ T.push({id:'A8',title:'Kürzen, Erweitern, Hauptnenner',intro:'',items:[a8,b8,c8,d8,e8]});
+ // A9
+ var C3=['<','>','='];function cs(c){return c<0?'<':c>0?'>':'=';}
+ var n9=ri(5,15),x9=ri(1,n9-1),y9=ri(1,n9-1);while(y9===x9)y9=ri(1,n9-1);
+ var it9=[{id:'9a',type:'choice',cmp:true,pts:0.5,label:t(x9,n9)+' ☐ '+t(y9,n9),options:C3,ans:C3.indexOf(cs(x9-y9)),sol:t(x9,n9)+' '+cs(x9-y9)+' '+t(y9,n9),rw:'Gleichnamig: der Bruch mit dem größeren Zähler ist größer. '+Math.max(x9,y9)+' > '+Math.min(x9,y9)}];
+ var eqPos=ri(0,2);
+ for(var j=0;j<3;j++){var id='9'+'bcd'[j];
+  if(j===eqPos){var qq9=ri(2,6),pp9=prop(qq9),k1_=ri(2,4),k2_=ri(2,4);while(k2_===k1_)k2_=ri(2,4);var A=[pp9*k1_,qq9*k1_],B=[pp9*k2_,qq9*k2_],L9=lcm(A[1],B[1]);
+   it9.push({id:id,type:'choice',cmp:true,pts:0.5,label:t(A[0],A[1])+' ☐ '+t(B[0],B[1]),options:C3,ans:2,sol:t(A[0],A[1])+' = '+t(B[0],B[1]),rw:'Hauptnenner '+L9+': '+t(A[0],A[1])+' = '+t(A[0]*L9/A[1],L9)+', '+t(B[0],B[1])+' = '+t(B[0]*L9/B[1],L9)+' (beide gekürzt '+t(pp9,qq9)+')'});}
+  else{var u,v,Lu;for(;;){var du=ri(3,12),dv2=ri(3,12);if(du===dv2)continue;u=[prop(du),du];v=[prop(dv2),dv2];Lu=lcm(du,dv2);if(Lu<=60&&cmpF(u,v)!==0)break;}
+   var c9=cmpF(u,v),xu=u[0]*Lu/u[1],xv=v[0]*Lu/v[1];
+   it9.push({id:id,type:'choice',cmp:true,pts:0.5,label:t(u[0],u[1])+' ☐ '+t(v[0],v[1]),options:C3,ans:C3.indexOf(cs(c9)),sol:t(u[0],u[1])+' '+cs(c9)+' '+t(v[0],v[1]),rw:'Hauptnenner '+Lu+': '+t(u[0],u[1])+' = '+t(xu,Lu)+', '+t(v[0],v[1])+' = '+t(xv,Lu)+'. '+xu+' '+cs(c9)+' '+xv});}}
+ function ordT(id){for(;;){var ds=[ri(2,12),ri(2,12),ri(2,12)];if(ds[0]===ds[1]||ds[1]===ds[2]||ds[0]===ds[2])continue;var L=lcmA(ds);if(L>40)continue;
+  var fs=ds.map(function(d){return [prop(d),d];});var vals=fs.map(function(f){return f[0]*L/f[1];});if(vals[0]===vals[1]||vals[1]===vals[2]||vals[0]===vals[2])continue;
+  var idx=[0,1,2].sort(function(a,b){return vals[a]-vals[b];});if(idx[0]===0&&idx[1]===1)continue;
+  return {id:id,type:'order',pts:1,label:fs.map(function(f){return t(f[0],f[1]);}).join(' ; '),fracs:fs,ans:idx,sol:idx.map(function(i){return t(fs[i][0],fs[i][1]);}).join(' < '),
+   rw:'Hauptnenner '+L+': '+fs.map(function(f,i){return t(f[0],f[1])+' = '+t(vals[i],L);}).join(', ')+'. '+idx.map(function(i){return t(vals[i],L);}).join(' < ')};}}
+ it9.push(ordT('9e'),ordT('9f'));
+ T.push({id:'A9',title:'Brüche vergleichen und ordnen',intro:'a)–d): Setze &lt;, &gt; oder = ein. e), f): Ordne der Größe nach, verwende „&lt;“.',items:it9});
+ // A10
+ function g10(id,terms,n){var s=0,lab=[],num=[];terms.forEach(function(x,i){s+=x;var a=Math.abs(x);lab.push((i===0?(x<0?M:''):(x<0?' '+M+' ':' + '))+t(a,n));num.push((i===0?(x<0?M:''):(x<0?M:'+'))+a);});
+  var r=red(s,n),mid=s<0?'{'+M+(-s)+'/'+n+'}':t(s,n),so=sol(r);
+  return {id:id,type:'frac',form:'mixed',pts:1,label:lab.join('')+' =',ans:r,sol:so,rw:'{'+num.join('')+'/'+n+'} = '+mid+(so!==mid?' = '+so:'')};}
+ function nn(){return ri(5,15);}
+ var it10=[];var n,a,b,c;
+ for(;;){n=nn();a=ri(1,n-1);b=ri(1,n-1);if(a+b>n&&(a+b)%n!==0)break;}it10.push(g10('10a',[a,b],n));
+ for(;;){n=nn();a=ri(2,n-1);b=ri(1,a-1);if(gcd(a-b,n)>1)break;}it10.push(g10('10b',[a,-b],n));
+ for(;;){n=nn();a=ri(1,n-1);b=ri(1,n-1);c=a+b-n;if(c>=1&&c<n)break;}it10.push(g10('10c',[a,b,-c],n));
+ for(;;){n=nn();a=ri(1,n-2);b=ri(a+1,n-1);if(gcd(b-a,n)>1)break;}it10.push(g10('10d',[a,-b],n));
+ for(;;){n=nn();a=ri(2,n-1);b=ri(1,a-1);break;}it10.push(g10('10e',[-a,b],n));
+ for(;;){n=nn();b=ri(1,n-2);c=ri(1,n-1-b);a=b+c;if(a<n)break;}it10.push(g10('10f',[a,-b,-c],n));
+ T.push({id:'A10',title:'Gleichnamige Brüche addieren und subtrahieren',intro:'Kürze das Ergebnis. Unechte Brüche schreibst du als gemischte Zahl.',items:it10});
+ // A11
+ var DL=[2,3,4,5,6,8,9,10,12];
+ function g11(id,k,test){for(;;){var ds=[];for(var i=0;i<k;i++)ds.push(pick(DL));var uniq=ds.filter(function(x,i){return ds.indexOf(x)===i;});if(uniq.length!==k)continue;var L=lcmA(ds);if(L>36)continue;
+  var fs=ds.map(function(d){return [prop(d),d];}),sg=[1];for(var i2=1;i2<k;i2++)sg.push(k===3?-1:(id==='11a'?1:-1));
+  var r=[0,1];fs.forEach(function(f,i){r=sg[i]>0?add(r,f):sub(r,f);});if(!test(r))continue;
+  var ex=fs.map(function(f){return f[0]*L/f[1];}),s=0;ex.forEach(function(x,i){s+=sg[i]*x;});
+  var lab=fs.map(function(f,i){return (i?(sg[i]>0?' + ':' '+M+' '):'')+t(f[0],f[1]);}).join('')+' =';
+  var exs=ex.map(function(x,i){return (i?(sg[i]>0?' + ':' '+M+' '):'')+t(x,L);}).join('');
+  var mid=s<0?'{'+M+(-s)+'/'+L+'}':t(s,L),so=sol(r),neg=s<0;
+  return {id:id,type:'frac',form:'mixed',pts:2,label:lab,ans:r,sol:so,rw:'Gemeinsamer Nenner '+L+': '+exs+' = '+mid+(so!==mid?' = '+so:'')};}}
+ T.push({id:'A11',title:'Ungleichnamige Brüche addieren und subtrahieren',intro:'Finde den gemeinsamen Nenner, erweitere, rechne, kürze. Unechte Brüche als gemischte Zahl.',items:[
+  g11('11a',2,function(r){return r[0]>r[1]&&r[1]!==1;}),g11('11b',2,function(r){return r[0]>0;}),g11('11c',2,function(r){return r[0]<0;}),g11('11d',3,function(r){return r[0]>0;})]});
+ return {title:'2. Schulaufgabe aus der Mathematik – Brüche (Übung)',seed:seed,tasks:T};
+}
+function newSeed(){return 100000+Math.floor(Math.random()*900000);}
+return {make:make,newSeed:newSeed,gcd:gcd,lcm:lcm};
+})();
+if(typeof module!=='undefined')module.exports=Gen;
+</script>
 <script>
-var DATA={"title": "2. Schulaufgabe aus der Mathematik – Brüche (Übung)", "tasks": [{"id": "A1", "title": "Bruchteile", "intro": "", "items": [{"id": "1a", "type": "frac", "form": "any", "pts": 1, "label": "Welcher Bruchteil des Rechtecks ist gefärbt?", "pic": {"rows": 1, "cols": 8, "shaded": 5}, "ans": [5, 8], "sol": "{5/8}", "rw": "Das Ganze ist in 8 gleiche Teile geteilt → Nenner 8. 5 Teile sind gefärbt → Zähler 5. Also {5/8}."}, {"id": "1b", "type": "shade", "pts": 1, "label": "Tippe Kästchen an und färbe {2/3} des Rechtecks.", "rows": 2, "cols": 6, "need": 8, "sol": "8 von 12 Kästchen", "rw": "12 Kästchen : 3 = 4 Kästchen ({1/3}). 4 · 2 = 8 Kästchen ({2/3})."}, {"id": "1c", "type": "choice", "pts": 0.5, "label": "Bei {7/9}: Wie heißt die 7 (oben)?", "options": ["Zähler", "Nenner", "Bruchstrich"], "ans": 0, "sol": "Zähler", "rw": "Oben steht der Zähler."}, {"id": "1d", "type": "choice", "pts": 0.5, "label": "Bei {7/9}: Wie heißt die 9 (unten)?", "options": ["Zähler", "Nenner", "Bruchstrich"], "ans": 1, "sol": "Nenner", "rw": "Unten steht der Nenner."}, {"id": "1e", "type": "choice", "pts": 1, "label": "Der <b>Nenner</b> des Bruches gibt an, …", "options": ["wie viele Teile genommen wurden.", "in wie viele gleiche Teile das Ganze geteilt wurde.", "wie groß das Ganze ist."], "ans": 1, "sol": "… in wie viele gleiche Teile das Ganze geteilt wurde.", "rw": "Der Nenner gibt an, in wie viele gleiche Teile das Ganze geteilt wurde. Der Zähler gibt an, wie viele Teile genommen wurden."}]}, {"id": "A2", "title": "Bruchteile von Größen – schreibe ohne Bruch", "intro": "", "items": [{"id": "2a", "type": "num", "pts": 1, "label": "{3/5} m =", "unit": "cm", "ans": 60, "sol": "60 cm", "rw": "1 m = 100 cm. (100 cm : 5) · 3 = 20 cm · 3 = 60 cm"}, {"id": "2b", "type": "num", "pts": 1, "label": "{3/8} kg =", "unit": "g", "ans": 375, "sol": "375 g", "rw": "1 kg = 1000 g. (1000 g : 8) · 3 = 125 g · 3 = 375 g"}, {"id": "2c", "type": "num", "pts": 1, "label": "{7/20} t =", "unit": "kg", "ans": 350, "sol": "350 kg", "rw": "1 t = 1000 kg. (1000 kg : 20) · 7 = 50 kg · 7 = 350 kg"}, {"id": "2d", "type": "num", "pts": 1, "label": "{2/3} h =", "unit": "min", "ans": 40, "sol": "40 min", "rw": "1 h = 60 min. (60 min : 3) · 2 = 20 min · 2 = 40 min"}, {"id": "2e", "type": "num", "pts": 1, "label": "{5/6} von 42 min =", "unit": "min", "ans": 35, "sol": "35 min", "rw": "42 min : 6 = 7 min. 7 min · 5 = 35 min"}]}, {"id": "A3", "title": "Vom Bruchteil zum Ganzen", "intro": "", "items": [{"id": "3a", "type": "num", "pts": 2, "label": "{3/5} von ? sind 45 km. Das Ganze:", "unit": "km", "ans": 75, "sol": "75 km", "rw": "45 km : 3 = 15 km → {1/5}. 15 km · 5 = 75 km → das Ganze."}, {"id": "3b", "type": "num", "pts": 2, "label": "{7/9} von ? sind 210 €. Das Ganze:", "unit": "€", "ans": 270, "sol": "270 €", "rw": "210 € : 7 = 30 € → {1/9}. 30 € · 9 = 270 € → das Ganze."}]}, {"id": "A4", "title": "Textaufgabe: Leuchtturm", "intro": "Ein Leuchtturm ist insgesamt 84 m hoch. {1/2} der Gesamthöhe ragt aus dem Wasser, {1/4} steckt im Meeresboden, der Rest steht im Wasser.", "items": [{"id": "4a", "type": "num", "pts": 1, "label": "Wie hoch ragt er aus dem Wasser?", "unit": "m", "ans": 42, "sol": "42 m", "rw": "{1/2} von 84 m: 84 m : 2 = 42 m"}, {"id": "4b", "type": "num", "pts": 1, "label": "Wie tief steckt er im Meeresboden?", "unit": "m", "ans": 21, "sol": "21 m", "rw": "{1/4} von 84 m: 84 m : 4 = 21 m"}, {"id": "4c", "type": "num", "pts": 1, "label": "Wie tief ist das Wasser am Leuchtturm?", "unit": "m", "ans": 21, "sol": "21 m", "rw": "84 m − 42 m − 21 m = 21 m"}, {"id": "4d", "type": "frac", "form": "reduced", "pts": 1, "label": "Welcher Bruchteil der Gesamthöhe steht im Wasser? (gekürzt)", "ans": [1, 4], "sol": "{1/4}", "rw": "21 m von 84 m: {21/84} = {1/4} (oder: 1 − {1/2} − {1/4} = {4/4} − {2/4} − {1/4} = {1/4})"}]}, {"id": "A5", "title": "Textaufgabe: Wie schnell sind sie?", "intro": "Ein Mauersegler schafft 72 m in einer Sekunde. Berechne, wie weit die anderen in einer Sekunde kommen.", "items": [{"id": "5a", "type": "num", "pts": 1, "label": "Brieftaube: {1/3} davon", "unit": "m", "ans": 24, "sol": "24 m", "rw": "{1/3} von 72 m: 72 m : 3 = 24 m"}, {"id": "5b", "type": "num", "pts": 1, "label": "Pferd: {5/24} davon", "unit": "m", "ans": 15, "sol": "15 m", "rw": "{5/24} von 72 m: 72 m : 24 = 3 m; 3 m · 5 = 15 m"}, {"id": "5c", "type": "num", "pts": 1, "label": "Mensch: {1/8} davon", "unit": "m", "ans": 9, "sol": "9 m", "rw": "{1/8} von 72 m: 72 m : 8 = 9 m"}]}, {"id": "A6", "title": "Bruchsorten – ordne zu", "intro": "Echter Bruch: Zähler kleiner als Nenner. Unechter Bruch: Zähler größer als Nenner. Scheinbruch: Zähler ist ein Vielfaches vom Nenner.", "items": [{"id": "6a", "type": "choice", "pts": 0.5, "label": "{4/7}", "options": ["echt", "unecht", "Scheinbruch"], "ans": 0, "sol": "echt", "rw": "4 < 7 → echter Bruch"}, {"id": "6b", "type": "choice", "pts": 0.5, "label": "{9/5}", "options": ["echt", "unecht", "Scheinbruch"], "ans": 1, "sol": "unecht", "rw": "9 > 5, aber kein Vielfaches → unechter Bruch"}, {"id": "6c", "type": "choice", "pts": 0.5, "label": "{12/4}", "options": ["echt", "unecht", "Scheinbruch"], "ans": 2, "sol": "Scheinbruch", "rw": "12 = 3 · 4 → Scheinbruch ({12/4} = 3)"}, {"id": "6d", "type": "choice", "pts": 0.5, "label": "{7/7}", "options": ["echt", "unecht", "Scheinbruch"], "ans": 2, "sol": "Scheinbruch", "rw": "7 = 1 · 7 → Scheinbruch ({7/7} = 1)"}, {"id": "6e", "type": "choice", "pts": 0.5, "label": "{2/9}", "options": ["echt", "unecht", "Scheinbruch"], "ans": 0, "sol": "echt", "rw": "2 < 9 → echter Bruch"}, {"id": "6f", "type": "choice", "pts": 0.5, "label": "{15/6}", "options": ["echt", "unecht", "Scheinbruch"], "ans": 1, "sol": "unecht", "rw": "15 > 6, 15 ist kein Vielfaches von 6 → unechter Bruch"}]}, {"id": "A7", "title": "Gemischte Zahlen und unechte Brüche", "intro": "a), b): Schreibe als unechten Bruch. c), d): Schreibe als gemischte Zahl.", "items": [{"id": "7a", "type": "frac", "form": "improper", "pts": 1, "label": "{2 3/5} =", "ans": [13, 5], "sol": "{13/5}", "rw": "Ganze mal Nenner + Zähler: 2 · 5 + 3 = 13. Der Nenner bleibt: {13/5}"}, {"id": "7b", "type": "frac", "form": "improper", "pts": 1, "label": "{4 5/6} =", "ans": [29, 6], "sol": "{29/6}", "rw": "4 · 6 + 5 = 29. Der Nenner bleibt: {29/6}"}, {"id": "7c", "type": "frac", "form": "mixed", "pts": 1, "label": "{23/4} =", "ans": [23, 4], "sol": "{5 3/4}", "rw": "Zähler : Nenner: 23 : 4 = 5 R 3 → 5 Ganze, Rest 3 ist der Zähler: {5 3/4}"}, {"id": "7d", "type": "frac", "form": "mixed", "pts": 1, "label": "{38/7} =", "ans": [38, 7], "sol": "{5 3/7}", "rw": "38 : 7 = 5 R 3 → {5 3/7}"}]}, {"id": "A8", "title": "Kürzen, Erweitern, Hauptnenner", "intro": "", "items": [{"id": "8a", "type": "frac", "form": "reduced", "pts": 1, "label": "Kürze vollständig: {18/24} =", "ans": [3, 4], "sol": "{3/4}", "rw": "18 und 24 durch 6 teilen: {18/24} = {3/4}"}, {"id": "8b", "type": "frac", "form": "reduced", "pts": 1, "label": "Kürze vollständig: {35/45} =", "ans": [7, 9], "sol": "{7/9}", "rw": "35 und 45 durch 5 teilen: {35/45} = {7/9}"}, {"id": "8c", "type": "frac", "form": "denom:28", "pts": 1, "label": "Erweitere auf den Nenner 28: {3/7} =", "ans": [3, 7], "sol": "{12/28}", "rw": "7 · 4 = 28, also mit 4 erweitern: 3 · 4 = 12 → {12/28}"}, {"id": "8d", "type": "num", "pts": 1, "label": "Hauptnenner (kgV) von {4/9} und {5/6}:", "unit": "", "ans": 18, "sol": "18", "rw": "Vielfache von 9: 9, 18, … – 18 ist auch Vielfaches von 6 → Hauptnenner 18"}, {"id": "8e", "type": "num", "pts": 1, "label": "Hauptnenner (kgV) von {3/4}, {5/6} und {7/8}:", "unit": "", "ans": 24, "sol": "24", "rw": "Vielfache von 8: 8, 16, 24 – 24 ist durch 4 und 6 teilbar → Hauptnenner 24"}]}, {"id": "A9", "title": "Brüche vergleichen und ordnen", "intro": "a)–d): Setze &lt;, &gt; oder = ein. e), f): Ordne der Größe nach, verwende „&lt;“.", "items": [{"id": "9a", "type": "choice", "cmp": true, "pts": 0.5, "label": "{7/12} ☐ {5/12}", "options": ["<", ">", "="], "ans": 1, "sol": "{7/12} > {5/12}", "rw": "Gleichnamig: der Bruch mit dem größeren Zähler ist größer. 7 > 5"}, {"id": "9b", "type": "choice", "cmp": true, "pts": 0.5, "label": "{3/5} ☐ {2/3}", "options": ["<", ">", "="], "ans": 0, "sol": "{3/5} < {2/3}", "rw": "Hauptnenner 15: {3/5} = {9/15}, {2/3} = {10/15}. 9 < 10"}, {"id": "9c", "type": "choice", "cmp": true, "pts": 0.5, "label": "{6/8} ☐ {9/12}", "options": ["<", ">", "="], "ans": 2, "sol": "{6/8} = {9/12}", "rw": "Hauptnenner 24: {6/8} = {18/24}, {9/12} = {18/24} (beide gekürzt {3/4})"}, {"id": "9d", "type": "choice", "cmp": true, "pts": 0.5, "label": "{5/6} ☐ {7/9}", "options": ["<", ">", "="], "ans": 1, "sol": "{5/6} > {7/9}", "rw": "Hauptnenner 18: {5/6} = {15/18}, {7/9} = {14/18}. 15 > 14"}, {"id": "9e", "type": "order", "pts": 1, "label": "{3/4} ; {2/3} ; {5/8}", "fracs": [[3, 4], [2, 3], [5, 8]], "ans": [2, 1, 0], "sol": "{5/8} < {2/3} < {3/4}", "rw": "Hauptnenner 24: {3/4} = {18/24}, {2/3} = {16/24}, {5/8} = {15/24}. {15/24} < {16/24} < {18/24}"}, {"id": "9f", "type": "order", "pts": 1, "label": "{7/10} ; {3/5} ; {3/4}", "fracs": [[7, 10], [3, 5], [3, 4]], "ans": [1, 0, 2], "sol": "{3/5} < {7/10} < {3/4}", "rw": "Hauptnenner 20: {7/10} = {14/20}, {3/5} = {12/20}, {3/4} = {15/20}. {12/20} < {14/20} < {15/20}"}]}, {"id": "A10", "title": "Gleichnamige Brüche addieren und subtrahieren", "intro": "Kürze das Ergebnis. Unechte Brüche schreibst du als gemischte Zahl.", "items": [{"id": "10a", "type": "frac", "form": "mixed", "pts": 1, "label": "{4/9} + {7/9} =", "ans": [11, 9], "sol": "{1 2/9}", "rw": "{4+7/9} = {11/9} = {1 2/9}"}, {"id": "10b", "type": "frac", "form": "mixed", "pts": 1, "label": "{11/12} − {5/12} =", "ans": [1, 2], "sol": "{1/2}", "rw": "{11−5/12} = {6/12} = {1/2}"}, {"id": "10c", "type": "frac", "form": "mixed", "pts": 1, "label": "{3/10} + {9/10} − {2/10} =", "ans": [1, 1], "sol": "1", "rw": "{3+9−2/10} = {10/10} = 1"}, {"id": "10d", "type": "frac", "form": "mixed", "pts": 1, "label": "{4/15} − {7/15} =", "ans": [-1, 5], "sol": "−{1/5}", "rw": "{4−7/15} = {−3/15} = −{1/5}"}, {"id": "10e", "type": "frac", "form": "mixed", "pts": 1, "label": "−{5/8} + {3/8} =", "ans": [-1, 4], "sol": "−{1/4}", "rw": "{−5+3/8} = {−2/8} = −{1/4}"}, {"id": "10f", "type": "frac", "form": "mixed", "pts": 1, "label": "{7/11} − {4/11} − {3/11} =", "ans": [0, 1], "sol": "0", "rw": "{7−4−3/11} = {0/11} = 0"}]}, {"id": "A11", "title": "Ungleichnamige Brüche addieren und subtrahieren", "intro": "Finde den gemeinsamen Nenner, erweitere, rechne, kürze. Unechte Brüche als gemischte Zahl.", "items": [{"id": "11a", "type": "frac", "form": "mixed", "pts": 2, "label": "{2/3} + {3/4} =", "ans": [17, 12], "sol": "{1 5/12}", "rw": "Gemeinsamer Nenner 12: {8/12} + {9/12} = {17/12} = {1 5/12}"}, {"id": "11b", "type": "frac", "form": "mixed", "pts": 2, "label": "{5/6} − {4/9} =", "ans": [7, 18], "sol": "{7/18}", "rw": "Gemeinsamer Nenner 18: {15/18} − {8/18} = {7/18}"}, {"id": "11c", "type": "frac", "form": "mixed", "pts": 2, "label": "{3/8} − {5/6} =", "ans": [-11, 24], "sol": "−{11/24}", "rw": "Gemeinsamer Nenner 24: {9/24} − {20/24} = {−11/24} = −{11/24}"}, {"id": "11d", "type": "frac", "form": "mixed", "pts": 2, "label": "{5/6} − {1/4} − {1/3} =", "ans": [1, 4], "sol": "{1/4}", "rw": "Gemeinsamer Nenner 12: {10/12} − {3/12} − {4/12} = {3/12} = {1/4}"}]}]};
+var URLSEED=parseInt((location.search.match(/[?&]seed=(\d+)/)||[])[1],10);if(!(URLSEED>0))URLSEED=0;
+var SEED=URLSEED||Gen.newSeed();var DATA=Gen.make(SEED);var TOUCHED=false;
 function fmt(s){return s.replace(/\{(?:(\d+) )?([^{}\/]+)\/([^{}]+)\}/g,function(m,g,z,n){return '<span class="fw">'+(g?'<span style="margin-right:2px">'+g+'</span>':'')+'<span class="fr"><span class="z">'+z+'</span><span class="n">'+n+'</span></span></span>';});}
 function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;}
 var TOTAL=0,submitted=false,ST={};
@@ -311,20 +456,28 @@ function submit(){
  submitted=true;document.body.classList.add('done');
  document.querySelectorAll('#tasks input,#tasks select').forEach(function(i){i.disabled=true});
  var n=Grader.note(tot,TOTAL),R=document.getElementById('res');R.style.display='block';
- R.innerHTML='<div class="big">'+fmtP(tot)+' von '+fmtP(TOTAL)+' Punkten · Note '+n+'</div><div>'+Math.round(tot/TOTAL*100)+' % · '+['','Sehr gut! 🎉','Gut! 👍','Befriedigend','Ausreichend – nochmal üben!','Mangelhaft – bitte die Rechenwege anschauen.','Ungenügend – bitte die Rechenwege anschauen.'][n]+'</div><div class="hint">Unten bei jeder Aufgabe stehen Lösung und Rechenweg für die Fehler.</div>';
+ R.innerHTML='<div class="big">'+fmtP(tot)+' von '+fmtP(TOTAL)+' Punkten · Note '+n+'</div><div>'+Math.round(tot/TOTAL*100)+' % · '+['','Sehr gut! 🎉','Gut! 👍','Befriedigend','Ausreichend – nochmal üben!','Mangelhaft – bitte die Rechenwege anschauen.','Ungenügend – bitte die Rechenwege anschauen.'][n]+'</div><div class="hint">Unten bei jeder Aufgabe stehen Lösung und Rechenweg für die Fehler.</div><div style="margin-top:10px" class="noprint"><button class="main" type="button" onclick="newTest()">Neue Schulaufgabe (neue Zahlen)</button></div>';
  window.RESULT={points:tot,total:TOTAL,note:n,items:res};
- document.getElementById('solb').style.display='';stopT();R.scrollIntoView({behavior:'smooth'});}
+ document.getElementById('solb').style.display='';document.getElementById('newb2').style.display='';stopT();R.scrollIntoView({behavior:'smooth'});}
 document.getElementById('sub1').onclick=document.getElementById('sub2').onclick=function(){if(submitted||window.SKIPCONFIRM||confirm('Wirklich abgeben?'))submit();};
 document.getElementById('solb').onclick=function(){document.body.classList.toggle('showsol');this.textContent=document.body.classList.contains('showsol')?'Lösungen ausblenden':'Lösungen anzeigen';};
-document.getElementById('rst').onclick=function(){if(window.SKIPCONFIRM||confirm('Alles löschen und neu starten?'))location.reload();};
+document.getElementById('rst').onclick=function(){if(window.SKIPCONFIRM||confirm('Alle Antworten löschen und dieselbe Variante neu starten?'))resetUI();};
+function resetUI(){submitted=false;TOUCHED=false;document.body.classList.remove('done');document.body.classList.remove('showsol');var R=document.getElementById('res');R.style.display='none';R.innerHTML='';
+ var sb=document.getElementById('solb');sb.style.display='none';sb.textContent='Lösungen anzeigen';document.getElementById('newb2').style.display='none';
+ stopT();T=45*60;draw();window.RESULT=null;build();document.getElementById('var').textContent=SEED;window.scrollTo(0,0);}
+function newTest(seed){SEED=seed||Gen.newSeed();DATA=Gen.make(SEED);resetUI();}
+document.getElementById('newb2').onclick=function(){newTest();};
+document.getElementById('tasks').addEventListener('input',function(){TOUCHED=true;});
+document.getElementById('tasks').addEventListener('click',function(e){if(e.target&&(e.target.tagName==='BUTTON'||e.target.parentNode&&e.target.parentNode.classList&&e.target.parentNode.classList.contains('tap')))TOUCHED=true;});
+document.getElementById('tasks').addEventListener('change',function(){TOUCHED=true;});
 var T=45*60,ti=null;function draw(){var m=Math.floor(Math.abs(T)/60),s=Math.abs(T)%60;document.getElementById('tm').textContent=(T<0?'+':'')+m+':'+(s<10?'0':'')+s;}
 function stopT(){if(ti){clearInterval(ti);ti=null;}document.getElementById('tbtn').textContent='Start';}
 document.getElementById('tbtn').onclick=function(){if(ti){stopT();return;}this.textContent='Pause';ti=setInterval(function(){T--;draw();if(T===0)alert('Die 45 Minuten sind um (du darfst trotzdem fertig machen).');},1000);};
 function startT(){if(!ti)document.getElementById('tbtn').click();}
-function los(){var n=document.getElementById('nm');if(n)n.blur();var a=document.getElementById('TA1');if(a){var y=a.getBoundingClientRect().top+window.pageYOffset-document.querySelector('.bar').offsetHeight-10;window.scrollTo(0,y);}if(!submitted)startT();}
+function los(){if(!submitted&&!TOUCHED&&!URLSEED){SEED=Gen.newSeed();DATA=Gen.make(SEED);build();document.getElementById('var').textContent=SEED;}var n=document.getElementById('nm');if(n)n.blur();var a=document.getElementById('TA1');if(a){var y=a.getBoundingClientRect().top+window.pageYOffset-document.querySelector('.bar').offsetHeight-10;window.scrollTo(0,y);}if(!submitted)startT();}
 try{
 document.getElementById('dt').value=new Date().toLocaleDateString('de-DE');
-build();
+build();document.getElementById('var').textContent=SEED;
 document.getElementById('los').onclick=los;
 document.getElementById('nm').addEventListener('keydown',function(e){if(e.key==='Enter'||e.keyCode===13){e.preventDefault();los();}});
 }catch(e){window.onerror(e&&e.message?e.message:String(e),'',0,0);}
