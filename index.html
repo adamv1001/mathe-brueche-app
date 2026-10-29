@@ -172,7 +172,18 @@ input,select,textarea{font-size:max(16px,1em)}
 <noscript><div style="background:#ffe600;color:#000;font-size:26px;font-weight:700;padding:20px">JavaScript ist aus oder wird hier nicht unterstützt. Bitte die Datei in Safari öffnen.</div></noscript>
 <div id="err" style="display:none;background:#fdeaea;color:#8a1c1c;border:4px solid #c62828;font-size:22px;padding:16px;margin:10px"></div>
 <script>document.getElementById('nojs').style.display='none';
-window.onerror=function(m,s,l,c){var e=document.getElementById('err');if(e){e.style.display='block';e.innerHTML+='<b>Fehler – bitte ein Foto davon schicken:</b> '+String(m)+' (Zeile '+l+':'+c+')<br>';}};</script>
+function showErr(msg,src,line,col,stack){try{var e=document.getElementById('err');if(!e)return;e.style.display='block';
+ var esc=function(x){return String(x==null?'':x).replace(/[&<>]/g,function(c){return c==='&'?'&amp;':c==='<'?'&lt;':'&gt;';});};
+ e.innerHTML+='<div><b>Fehler – bitte ein Foto davon schicken:</b> '+esc(msg)+'<br><small>'+esc(src)+' Zeile '+esc(line)+':'+esc(col)+(stack?'<br>'+esc(String(stack).slice(0,400)):'')+'</small></div>';}catch(x){}}
+window.showErr=showErr;
+window.addEventListener('error',function(ev){try{
+ if(!ev||ev.target&&ev.target!==window&&ev.target.tagName)return;
+ var msg=ev.message||'',src=ev.filename||'',line=ev.lineno||0,col=ev.colno||0;
+ if(!ev.error||line===0||/^(Uncaught )?Script error\.?$/i.test(msg))return;
+ var base=location.origin+location.pathname.replace(/[^\/]*$/,'');
+ if(src&&src.indexOf(base)!==0)return;
+ var stk=String(ev.error&&ev.error.stack||'');if(!src&&/https?:\/\//.test(stk)&&stk.indexOf(base)<0)return;
+ showErr(msg,src,line,col,ev.error&&ev.error.stack);}catch(x){}});</script>
 <div class="bar"><b>Mathe · Brüche · Kl. 6</b><span>⏱ <span class="tm" id="tm">45:00</span> <button id="tbtn" style="min-height:34px;padding:2px 10px;background:transparent;color:#fff;border-color:#fff">Start</button></span><button class="main" id="sub1">Abgeben</button></div>
 <div class="wrap"><div class="paper">
 <h1 id="ttl"></h1>
@@ -475,11 +486,10 @@ function stopT(){if(ti){clearInterval(ti);ti=null;}document.getElementById('tbtn
 document.getElementById('tbtn').onclick=function(){if(ti){stopT();return;}this.textContent='Pause';ti=setInterval(function(){T--;draw();if(T===0)alert('Die 45 Minuten sind um (du darfst trotzdem fertig machen).');},1000);};
 function startT(){if(!ti)document.getElementById('tbtn').click();}
 function los(){if(!submitted&&!TOUCHED&&!URLSEED){SEED=Gen.newSeed();DATA=Gen.make(SEED);build();document.getElementById('var').textContent=SEED;}var n=document.getElementById('nm');if(n)n.blur();var a=document.getElementById('TA1');if(a){var y=a.getBoundingClientRect().top+window.pageYOffset-document.querySelector('.bar').offsetHeight-10;window.scrollTo(0,y);}if(!submitted)startT();}
-try{
-document.getElementById('dt').value=new Date().toLocaleDateString('de-DE');
-build();document.getElementById('var').textContent=SEED;
-document.getElementById('los').onclick=los;
-document.getElementById('nm').addEventListener('keydown',function(e){if(e.key==='Enter'||e.keyCode===13){e.preventDefault();los();}});
-}catch(e){window.onerror(e&&e.message?e.message:String(e),'',0,0);}
-</script><script>if("serviceWorker" in navigator&&location.protocol!=="file:"){window.addEventListener("load",function(){var hadC=!!navigator.serviceWorker.controller,rl=false;navigator.serviceWorker.addEventListener("controllerchange",function(){if(hadC&&!rl&&!document.body.classList.contains("done")){rl=true;location.reload();}});navigator.serviceWorker.register("sw.js").then(function(){window.SWOK=1;}).catch(function(e){window.SWERR=String(e);});});}</script>
+function safe(name,f){try{f();}catch(e){showErr(e&&e.message?e.message:String(e),name,0,0,e&&e.stack);}}
+safe('Datum',function(){document.getElementById('dt').value=new Date().toLocaleDateString('de-DE');});
+safe('Aufgaben',function(){build();document.getElementById('var').textContent=SEED;});
+safe('Los',function(){document.getElementById('los').onclick=los;});
+safe('Name',function(){document.getElementById('nm').addEventListener('keydown',function(e){if(e.key==='Enter'||e.keyCode===13){e.preventDefault();los();}});});
+</script><script>try{if("serviceWorker" in navigator&&location.protocol!=="file:"){window.addEventListener("load",function(){var hadC=!!navigator.serviceWorker.controller,rl=false;navigator.serviceWorker.addEventListener("controllerchange",function(){if(hadC&&!rl&&!document.body.classList.contains("done")){rl=true;location.reload();}});navigator.serviceWorker.register("sw.js").then(function(){window.SWOK=1;}).catch(function(e){window.SWERR=String(e);});});}}catch(e){}</script>
 </body></html>
