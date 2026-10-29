@@ -117,6 +117,56 @@ img,table{max-width:100%}
 html,body{overflow-x:hidden}
 @media (max-width:700px){body{font-size:19px}.bar b{display:none}.item{font-size:20px}.grid.tap div{width:46px;height:46px}h1{font-size:26px}.task h2{font-size:22px}}
 @media print{body{font-size:15px}.item{font-size:15px}}
+
+/* ---- iPhone / small screens ---- */
+.wrap{padding-left:max(18px,env(safe-area-inset-left));padding-right:max(18px,env(safe-area-inset-right));padding-bottom:max(18px,env(safe-area-inset-bottom))}
+.bar{padding-left:max(18px,env(safe-area-inset-left));padding-right:max(18px,env(safe-area-inset-right))}
+input,select,textarea{font-size:max(16px,1em)}
+@media (max-width:700px){
+ body{font-size:18px}
+ .bar{padding:8px max(10px,env(safe-area-inset-right)) 8px max(10px,env(safe-area-inset-left));gap:8px}
+ .bar b{display:none}.bar .tm{font-size:20px}
+ #tbtn{min-height:44px!important;font-size:17px;padding:2px 12px!important}
+ button{min-height:48px;font-size:18px;padding:8px 14px;border-radius:12px}
+ button.main{font-size:19px;padding:8px 16px}
+ #los{min-height:56px!important;font-size:22px!important}
+ .wrap{padding:8px max(8px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+ .paper{padding:12px}
+ h1{font-size:23px}.sub{font-size:15px}
+ .head{grid-template-columns:1fr 1fr;gap:10px}.head .nm{grid-column:1/3}
+ .head label{font-size:15px}.head input{font-size:18px;min-height:48px;padding:8px}
+ .info{font-size:16px;padding:10px}
+ .task{padding:12px 10px;margin:16px 0}
+ .task h2{font-size:20px;flex-wrap:wrap}.task h2 .p{font-size:16px}
+ .intro{font-size:18px}
+ .item{font-size:19px;gap:10px;padding:14px 2px}
+ .lbl{flex:1 1 100%}
+ .hint{font-size:14px}
+ .fin{gap:8px}.fin .stk .bl{width:62px;height:3px}
+ input.b{width:62px;height:50px;font-size:24px;border-width:2px}
+ input.g{width:54px;height:54px}
+ input.num{width:120px;height:50px;font-size:24px}
+ .sg{width:48px;height:48px;min-height:48px;font-size:26px}
+ .unit{font-size:20px}
+ .ch{gap:8px}.ch button{min-height:48px;font-size:19px}
+ .ch.cmp button{min-width:60px;font-size:26px}
+ .ord{gap:6px}.ord select{font-size:20px;height:50px;min-width:84px}
+ .grid.tap div{width:46px;height:46px}
+ .pic div{width:30px;height:30px}
+ .fb{font-size:16px;padding:10px}
+ .mark{font-size:26px}
+ #res{font-size:17px;padding:12px}#res .big{font-size:24px}
+ table.key{font-size:14px;width:100%}table.key td,table.key th{padding:4px 3px}
+ .btns{gap:8px}.btns button{flex:1 1 140px}
+}
+@media (max-width:360px){
+ .grid.tap div{width:44px;height:44px}.pic div{width:28px;height:28px}
+ input.b{width:56px}.fin .stk .bl{width:56px}input.g{width:48px}
+ .ord select{min-width:76px;font-size:18px}
+}
+@media (max-height:500px) and (orientation:landscape){
+ .bar{position:static}
+}
 </style></head><body>
 <div id="nojs" style="background:#ffe600;color:#000;font-size:26px;font-weight:700;padding:20px;border-bottom:4px solid #000;line-height:1.4">⚠️ Wenn du das hier liest, läuft JavaScript nicht (z. B. nur Vorschau). Bitte die Seite in Safari öffnen, damit die Schulaufgabe funktioniert.</div>
 <noscript><div style="background:#ffe600;color:#000;font-size:26px;font-weight:700;padding:20px">JavaScript ist aus oder wird hier nicht unterstützt. Bitte die Datei in Safari öffnen.</div></noscript>
@@ -278,5 +328,5 @@ build();
 document.getElementById('los').onclick=los;
 document.getElementById('nm').addEventListener('keydown',function(e){if(e.key==='Enter'||e.keyCode===13){e.preventDefault();los();}});
 }catch(e){window.onerror(e&&e.message?e.message:String(e),'',0,0);}
-</script><script>if("serviceWorker" in navigator&&location.protocol!=="file:"){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").then(function(){window.SWOK=1;}).catch(function(e){window.SWERR=String(e);});});}</script>
+</script><script>if("serviceWorker" in navigator&&location.protocol!=="file:"){window.addEventListener("load",function(){var hadC=!!navigator.serviceWorker.controller,rl=false;navigator.serviceWorker.addEventListener("controllerchange",function(){if(hadC&&!rl&&!document.body.classList.contains("done")){rl=true;location.reload();}});navigator.serviceWorker.register("sw.js").then(function(){window.SWOK=1;}).catch(function(e){window.SWERR=String(e);});});}</script>
 </body></html>
